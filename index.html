@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="LINKGO membantu mengarahkan pengunjung ke halaman unduhan dengan mudah.">
+<title>LINKGO — Smart Download Links</title>
+<style>
+:root{--bg:#0b1020;--panel:#141d33;--muted:#9ba9c4;--text:#f4f7ff;--accent:#6ee7b7;--blue:#7aa7ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -10%,#24385e 0,#0b1020 48%);color:var(--text);font:16px system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+header{max-width:980px;margin:auto;padding:22px 20px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-weight:900;letter-spacing:2px;font-size:23px}.logo span{color:var(--accent)}
+.tag{color:var(--muted);font-size:13px}
+main{max-width:720px;margin:48px auto;padding:0 18px}
+.card{background:rgba(20,29,51,.94);border:1px solid #2b3a59;border-radius:22px;padding:28px;box-shadow:0 20px 70px #0005}
+h1{font-size:clamp(27px,6vw,39px);margin:0 0 8px;text-align:center}
+.sub{text-align:center;color:var(--muted);margin:0 0 25px}
+.ad{border:1px dashed #53627e;border-radius:14px;min-height:112px;display:grid;place-items:center;text-align:center;padding:15px;color:#aebbd2;background:#10182b;margin:20px 0}
+.ad small{display:block;color:#7f8da8;margin-top:5px}
+.field{display:flex;gap:9px;margin-top:15px}input{width:100%;min-width:0;background:#0b1325;border:1px solid #344565;color:white;border-radius:12px;padding:14px;font-size:15px}
+button{border:0;border-radius:12px;padding:14px 18px;background:var(--accent);color:#092018;font-weight:800;font-size:15px;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}.primary{width:100%;margin-top:14px}
+.status{text-align:center;color:var(--muted);margin:18px 0 0;font-size:14px}
+.note{font-size:12px;color:#8796b2;line-height:1.6;margin-top:20px}
+footer{text-align:center;color:#71809d;font-size:12px;padding:30px 15px}
+.hidden{display:none!important}.pill{display:inline-block;border:1px solid #3b4c6c;border-radius:999px;padding:6px 11px;color:#b9c8e4;font-size:12px;margin:0 auto 15px}
+.center{text-align:center}
+@media(max-width:520px){.card{padding:22px 17px}.field{flex-direction:column}header{padding:18px}}
+</style>
+</head>
+<body>
+<header><div class="logo">LINK<span>GO</span></div><div class="tag">SMART DOWNLOAD LINKS</div></header>
+<main>
+<section class="card" id="home">
+  <div class="center"><span class="pill">SIMPLE • FAST • CLEAR</span></div>
+  <h1>Kelola link download dengan mudah</h1>
+  <p class="sub">Masukkan alamat tujuan untuk membuat halaman perantara LINKGO.</p>
+  <label for="target">Link tujuan (URL lengkap)</label>
+  <div class="field"><input id="target" type="url" placeholder="https://contoh.com/file" autocomplete="url"><button id="make">Buat</button></div>
+  <div class="ad"><div>Ruang iklan<br><small>Iklan hanya ditampilkan setelah terhubung dengan penyedia iklan dan disetujui.</small></div></div>
+  <p class="note">Gunakan hanya untuk link yang kamu miliki atau berhak bagikan. LINKGO tidak boleh dipakai untuk menyamarkan tujuan, menipu pengunjung, atau melewati kontrol keamanan.</p>
+</section>
+<section class="card hidden" id="gate">
+  <div class="center"><span class="pill">LINK PERANTARA</span></div>
+  <h1>Siap menuju halaman tujuan?</h1>
+  <p class="sub">Periksa alamat tujuan sebelum melanjutkan.</p>
+  <div class="ad"><div>Ruang iklan<br><small>Konten iklan harus mematuhi kebijakan penyedia iklan.</small></div></div>
+  <p class="status" id="destination"></p>
+  <p class="status" id="count">Tombol tersedia dalam 5 detik…</p>
+  <button class="primary" id="continue" disabled>Lanjut ke tujuan</button>
+  <p class="note">LINKGO tidak meminta klik iklan. Jangan klik iklan sendiri atau mendorong pengunjung melakukannya.</p>
+</section>
+</main>
+<footer>© <span id="year"></span> LINKGO · Tautan transparan dan aman</footer>
+<script>
+const $=id=>document.getElementById(id);
+$("year").textContent=new Date().getFullYear();
+function safeUrl(value){
+  try{const u=new URL(value);if(!["http:","https:"].includes(u.protocol))return null;return u;}catch{return null;}
+}
+$("make").addEventListener("click",()=>{
+  const u=safeUrl($("target").value.trim());
+  if(!u){alert("Masukkan URL yang valid dengan https:// atau http://");return;}
+  // Shareable URL stores the destination as a URL-encoded parameter.
+  const share=new URL(location.href);
+  share.searchParams.set("url",u.href);
+  history.pushState({}, "", share);
+  showGate(u);
+});
+function showGate(u){
+  $("home").classList.add("hidden");$("gate").classList.remove("hidden");
+  $("destination").textContent="Tujuan: "+u.hostname;
+  let seconds=5;$("continue").disabled=true;$("count").textContent=`Tombol tersedia dalam ${seconds} detik…`;
+  const timer=setInterval(()=>{seconds--;if(seconds<=0){clearInterval(timer);$("count").textContent="Kamu bisa melanjutkan sekarang.";$("continue").disabled=false;}else{$("count").textContent=`Tombol tersedia dalam ${seconds} detik…`;}},1000);
+  $("continue").onclick=()=>{if(!$("continue").disabled)location.href=u.href;};
+}
+const params=new URLSearchParams(location.search);
+if(params.has("url")){
+  const u=safeUrl(params.get("url"));
+  if(u)showGate(u);else alert("Link tujuan tidak valid.");
+}
+</script>
+</body>
+</html>
